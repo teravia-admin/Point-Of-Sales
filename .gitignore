@@ -1,0 +1,16 @@
+node_modules/
+.expo/
+dist/
+web-build/
+
+# EAS & Build artifacts
+*.apk
+*.aab
+*.keystore
+
+# Local environment variables
+.env*.local
+
+# macOS / Windows system files
+.DS_Store
+Thumbs.db
