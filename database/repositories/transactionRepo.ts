@@ -1,8 +1,12 @@
 import { getDatabase } from '../client';
-import { Transaction, TransactionItem, CartItem } from '@/types';
+import { CartItem } from '@/store/cartStore';
+import { OrderType } from '@/types';
 
 export async function createTransaction(data: {
   shiftId: string;
+  customerName?: string;
+  tableNumber?: string;
+  orderType: OrderType;
   subtotal: number;
   discountAmount: number;
   taxAmount: number;
@@ -18,15 +22,18 @@ export async function createTransaction(data: {
   const transactionNo = 'TRX/' + new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 12);
 
   await db.withTransactionAsync(async () => {
-    // 1. Insert Transaction Header
+    // Insert Transaction
     await db.runAsync(
       `INSERT INTO transactions 
-      (id, transaction_no, shift_id, subtotal, discount_amount, tax_amount, grand_total, paid_amount, change_amount, payment_method, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      (id, transaction_no, shift_id, customer_name, table_number, order_type, subtotal, discount_amount, tax_amount, grand_total, paid_amount, change_amount, payment_method, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         transactionId,
         transactionNo,
         data.shiftId,
+        data.customerName || null,
+        data.tableNumber || null,
+        data.orderType,
         data.subtotal,
         data.discountAmount,
         data.taxAmount,
@@ -38,15 +45,15 @@ export async function createTransaction(data: {
       ]
     );
 
-    // 2. Insert Transaction Items & Update Product Stock
+    // Insert Items & Potong Stok
     for (const item of data.items) {
       const itemId = 'item_' + Date.now() + '_' + Math.random().toString(36).substring(2, 5);
       const itemTotal = item.product.selling_price * item.quantity;
 
       await db.runAsync(
         `INSERT INTO transaction_items 
-        (id, transaction_id, product_id, product_name, cost_price, selling_price, quantity, total_price)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+        (id, transaction_id, product_id, product_name, cost_price, selling_price, quantity, total_price, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
           itemId,
           transactionId,
@@ -56,20 +63,13 @@ export async function createTransaction(data: {
           item.product.selling_price,
           item.quantity,
           itemTotal,
+          item.notes || null,
         ]
       );
 
-      // Potong Stok
       await db.runAsync(
         `UPDATE products SET stock = stock - ? WHERE id = ?;`,
         [item.quantity, item.product.id]
-      );
-
-      // Insert Stock Movement Audit
-      const movementId = 'mov_' + Date.now() + '_' + Math.random().toString(36).substring(2, 5);
-      await db.runAsync(
-        `INSERT INTO stock_movements (id, product_id, qty, type, reason) VALUES (?, ?, ?, 'SALE', ?);`,
-        [movementId, item.product.id, -item.quantity, `Penjualan ${transactionNo}`]
       );
     }
   });
@@ -84,4 +84,4 @@ export async function getTransactionById(id: string): Promise<{ transaction: any
 
   const items = await db.getAllAsync<any>('SELECT * FROM transaction_items WHERE transaction_id = ?;', [id]);
   return { transaction, items };
-        }
+}
