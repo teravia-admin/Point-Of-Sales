@@ -1,0 +1,17 @@
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+
+export default function ProductsScreen() {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Manajemen Produk</Text>
+      <Text style={styles.subtitle}>Daftar dan stok produk akan tampil di sini.</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC' },
+  title: { fontSize: 20, fontWeight: 'bold', color: '#1E293B' },
+  subtitle: { fontSize: 14, color: '#64748B', marginTop: 4 },
+});
