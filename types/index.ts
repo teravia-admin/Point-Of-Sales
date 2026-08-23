@@ -1,28 +1,5 @@
-export type UserRole = 'OWNER' | 'CASHIER';
-
-export interface User {
-  id: string;
-  name: string;
-  pin_hash: string;
-  role: UserRole;
-  created_at: string;
-}
-
-export interface StoreProfile {
-  id: string;
-  name: string;
-  address: string;
-  phone: string;
-  tax_enabled: boolean;
-  tax_rate: number;
-  created_at: string;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  color: string;
-}
+export type OrderType = 'DINE_IN' | 'TAKEAWAY' | 'ONLINE';
+export type PaymentMethod = 'CASH' | 'QRIS' | 'TRANSFER';
 
 export interface Product {
   id: string;
@@ -38,26 +15,29 @@ export interface Product {
   is_active: boolean;
 }
 
-export type ShiftStatus = 'OPEN' | 'CLOSED';
-
-export interface CashShift {
+export interface Category {
   id: string;
-  user_id: string;
-  opening_cash: number;
-  closing_cash: number | null;
-  expected_cash: number | null;
-  status: ShiftStatus;
-  opened_at: string;
-  closed_at: string | null;
+  name: string;
+  color: string;
 }
 
-export type TransactionStatus = 'COMPLETED' | 'VOID' | 'REFUNDED';
-export type PaymentMethod = 'CASH' | 'QRIS' | 'TRANSFER' | 'DEBIT' | 'CREDIT' | 'OTHER';
+export interface StoreProfile {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  tax_enabled: boolean;
+  tax_rate: number;
+  created_at?: string;
+}
 
 export interface Transaction {
   id: string;
   transaction_no: string;
   shift_id: string;
+  customer_name?: string | null;
+  table_number?: string | null;
+  order_type: OrderType;
   subtotal: number;
   discount_amount: number;
   tax_amount: number;
@@ -65,29 +45,7 @@ export interface Transaction {
   paid_amount: number;
   change_amount: number;
   payment_method: PaymentMethod;
-  status: TransactionStatus;
-  notes: string | null;
-  created_at: string;
-}
-
-export interface TransactionItem {
-  id: string;
-  transaction_id: string;
-  product_id: string;
-  product_name: string;
-  cost_price: number;
-  selling_price: number;
-  quantity: number;
-  total_price: number;
-}
-
-export type MovementType = 'IN' | 'OUT' | 'ADJUSTMENT' | 'SALE' | 'VOID';
-
-export interface StockMovement {
-  id: string;
-  product_id: string;
-  qty: number;
-  type: MovementType;
-  reason: string | null;
+  status: 'COMPLETED' | 'VOID';
+  notes?: string | null;
   created_at: string;
 }
