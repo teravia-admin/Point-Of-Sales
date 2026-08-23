@@ -39,9 +39,13 @@ export default function ReceiptScreen() {
     text += `================================\n`;
     text += `No: ${transaction.transaction_no}\n`;
     text += `Tgl: ${new Date(transaction.created_at).toLocaleString('id-ID')}\n`;
+    text += `Tipe: ${transaction.order_type}\n`;
+    if (transaction.customer_name) text += `A.n: ${transaction.customer_name}\n`;
+    if (transaction.table_number) text += `Meja: ${transaction.table_number}\n`;
     text += `================================\n`;
     items.forEach((item) => {
       text += `${item.product_name}\n`;
+      if (item.notes) text += `  * Note: ${item.notes}\n`;
       text += `${item.quantity} x Rp ${item.selling_price.toLocaleString('id-ID')} = Rp ${item.total_price.toLocaleString('id-ID')}\n`;
     });
     text += `================================\n`;
@@ -92,11 +96,19 @@ export default function ReceiptScreen() {
           <Text style={styles.metaText}>No: {transaction.transaction_no}</Text>
           <Text style={styles.metaText}>{new Date(transaction.created_at).toLocaleDateString('id-ID')}</Text>
         </View>
+        <View style={styles.metaRow}>
+          <Text style={styles.metaText}>Tipe: {transaction.order_type}</Text>
+          {transaction.table_number && <Text style={styles.metaText}>Meja: {transaction.table_number}</Text>}
+        </View>
+        {transaction.customer_name && (
+          <Text style={styles.metaText}>Pelanggan: {transaction.customer_name}</Text>
+        )}
         <Divider style={styles.divider} />
 
         {items.map((item) => (
           <View key={item.id} style={styles.itemBlock}>
             <Text style={styles.itemName}>{item.product_name}</Text>
+            {item.notes ? <Text style={styles.itemNote}>* {item.notes}</Text> : null}
             <View style={styles.itemDetail}>
               <Text style={styles.itemQty}>{item.quantity} x Rp {item.selling_price.toLocaleString('id-ID')}</Text>
               <Text style={styles.itemTotal}>Rp {item.total_price.toLocaleString('id-ID')}</Text>
@@ -161,10 +173,11 @@ const styles = StyleSheet.create({
   storeName: { fontSize: 18, fontWeight: 'bold', textAlign: 'center', color: '#1E293B' },
   storeAddress: { fontSize: 12, color: '#64748B', textAlign: 'center' },
   divider: { marginVertical: 12 },
-  metaRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  metaRow: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 2 },
   metaText: { fontSize: 12, color: '#64748B' },
   itemBlock: { marginBottom: 8 },
   itemName: { fontWeight: '600', color: '#1E293B' },
+  itemNote: { fontSize: 11, color: '#D97706', fontStyle: 'italic' },
   itemDetail: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
   itemQty: { fontSize: 12, color: '#64748B' },
   itemTotal: { fontSize: 12, fontWeight: 'bold' },
@@ -172,5 +185,5 @@ const styles = StyleSheet.create({
   grandLabel: { fontWeight: 'bold', fontSize: 16 },
   grandValue: { fontWeight: 'bold', fontSize: 16, color: '#4F46E5' },
   footerText: { textAlign: 'center', color: '#64748B', fontSize: 12, fontStyle: 'italic' },
-  actionRow: { flexDirection: 'row', marginTop: 16 },
+  actionRow: { flexDirection: 'row', marginTop: 16, marginBottom: 32 },
 });
