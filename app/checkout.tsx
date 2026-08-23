@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
-import { Surface, Text, Button, TextInput, SegmentedButtons, Divider } from 'react-native-paper';
+import { Surface, Text, Button, TextInput, SegmentedButtons, Divider, Card } from 'react-native-paper';
 import { router } from 'expo-router';
 import { useCartStore } from '@/store/cartStore';
 import { calculateTransaction } from '@/services/calculationService';
@@ -9,7 +9,7 @@ import { getStoreProfile } from '@/database/repositories/storeRepo';
 import { PaymentMethod } from '@/types';
 
 export default function CheckoutScreen() {
-  const { items, discountType, discountValue, clearCart } = useCartStore();
+  const { items, customerName, tableNumber, orderType, discountType, discountValue, clearCart } = useCartStore();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
   const [paidAmountText, setPaidAmountText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -51,11 +51,13 @@ export default function CheckoutScreen() {
 
     try {
       setLoading(true);
-      // Untuk MVP: shiftId default dummy jika shift aktif belum diautentikasi
       const shiftId = 'shift_default';
 
       const trxId = await createTransaction({
         shiftId,
+        customerName,
+        tableNumber,
+        orderType,
         subtotal: calc.subtotal,
         discountAmount: calc.discountAmount,
         taxAmount: calc.taxAmount,
@@ -78,9 +80,40 @@ export default function CheckoutScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
+      {/* Konfirmasi Detail Pelanggan & Meja */}
       <Surface style={styles.card} elevation={1}>
-        <Text variant="titleMedium" style={styles.sectionTitle}>Ringkasan Pembayaran</Text>
-        
+        <Text variant="titleMedium" style={styles.sectionTitle}>Detail Pelanggan & Meja</Text>
+        <View style={styles.row}>
+          <Text style={styles.label}>Tipe Pesanan:</Text>
+          <Text style={styles.value}>{orderType}</Text>
+        </View>
+        <View style={styles.row}>
+          <Text style={styles.label}>Atas Nama:</Text>
+          <Text style={styles.value}>{customerName || '-'}</Text>
+        </View>
+        {orderType === 'DINE_IN' && (
+          <View style={styles.row}>
+            <Text style={styles.label}>Nomor Meja:</Text>
+            <Text style={styles.value}>{tableNumber || '-'}</Text>
+          </View>
+        )}
+      </Surface>
+
+      {/* Rincian Menu Pesanan */}
+      <Surface style={[styles.card, { marginTop: 12 }]} elevation={1}>
+        <Text variant="titleMedium" style={styles.sectionTitle}>Rincian Menu Pesanan</Text>
+        {items.map((item) => (
+          <View key={item.product.id} style={styles.itemBlock}>
+            <View style={styles.row}>
+              <Text style={styles.itemName}>{item.quantity}x {item.product.name}</Text>
+              <Text style={styles.itemPrice}>Rp {(item.product.selling_price * item.quantity).toLocaleString('id-ID')}</Text>
+            </View>
+            {item.notes ? <Text style={styles.itemNote}>* Note: {item.notes}</Text> : null}
+          </View>
+        ))}
+
+        <Divider style={{ marginVertical: 8 }} />
+
         <View style={styles.row}>
           <Text style={styles.label}>Subtotal</Text>
           <Text style={styles.value}>Rp {calc.subtotal.toLocaleString('id-ID')}</Text>
@@ -108,6 +141,7 @@ export default function CheckoutScreen() {
         </View>
       </Surface>
 
+      {/* Metode Pembayaran */}
       <Surface style={[styles.card, { marginTop: 12 }]} elevation={1}>
         <Text variant="titleMedium" style={styles.sectionTitle}>Metode Pembayaran</Text>
         
@@ -160,7 +194,7 @@ export default function CheckoutScreen() {
         style={styles.payBtn}
         contentStyle={{ paddingVertical: 8 }}
       >
-        Selesaikan Transaksi
+        Konfirmasi & Cetak Struk
       </Button>
     </ScrollView>
   );
@@ -170,12 +204,16 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   card: { padding: 16, borderRadius: 12, backgroundColor: '#FFFFFF' },
   sectionTitle: { fontWeight: 'bold', marginBottom: 12, color: '#1E293B' },
-  row: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 4 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 3 },
   label: { color: '#64748B' },
   value: { fontWeight: '600', color: '#1E293B' },
+  itemBlock: { marginVertical: 4 },
+  itemName: { fontWeight: '600', color: '#334155' },
+  itemPrice: { fontWeight: 'bold', color: '#1E293B' },
+  itemNote: { fontSize: 11, color: '#D97706', fontStyle: 'italic' },
   totalLabel: { fontWeight: 'bold', fontSize: 16, color: '#1E293B' },
   totalValue: { fontWeight: 'bold', fontSize: 18, color: '#4F46E5' },
   quickPayRow: { flexDirection: 'row', justifyContent: 'space-between' },
   quickBtn: { flex: 1, marginHorizontal: 4 },
-  payBtn: { marginTop: 16, backgroundColor: '#4F46E5', borderRadius: 8 },
+  payBtn: { marginTop: 16, marginBottom: 32, backgroundColor: '#4F46E5', borderRadius: 8 },
 });
